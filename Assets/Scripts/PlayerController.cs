@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,28 +10,40 @@ public class PlayerController : MonoBehaviour
     Vector2 vectorToLeft = new Vector2(-1, 0);
     private string currentAnim = "";
     public float moveSpeed = 1;
+    public float walkSpeed = 1;
+    public float runSpeed = 1;
     public float jumpStrength = 1;
 
     public bool onGround = false;
     public SpriteRenderer playerSpriteRenderer;
 
     public Animator playerAnimator;
-    void Start()
-    {
 
+    public bool isPressedButtonRight = false;
+    public bool isPressedButtonLeft = false;
+
+    public int healthPoint = 1;
+
+    public bool canTakeDamege = true;
+    public Color colorShield;
+    public Color colorNormal;
+    private void Start()
+    {
+        healthPoint = PlayerPrefs.GetInt("PlayerHP", 100);
     }
 
     void Update()
     {
-        Move();
+        keybodrdController();
+        //touchController();
     }
-    void Move()
+    void touchController()
     {
-        if (Input.GetKey("d"))
+        if (isPressedButtonRight == true)
         {
             playerMoveRight();
         }
-        else if (Input.GetKey("a"))
+        else if (isPressedButtonLeft == true)
         {
             playerMoveLeft();
         }
@@ -38,11 +51,60 @@ public class PlayerController : MonoBehaviour
         {
             playerStopMovement();
         }
+    }
+    void keybodrdController()
+    {
+        if (Input.GetKey("a"))
+        {
+           playerMoveLeft();
+        }
+        else if (Input.GetKey("d"))
+        {
+            playerMoveRight();
+        }
+        else
+        {
+            playerStopMovement();
+        }
+
         if (Input.GetKeyDown("space") == true )
         {
             playerJump();
         }
+        if (Input.GetKey("left shift") == true)
+        {
+            playerRunOn();
+        }
+        if (Input.GetKeyUp("left shift") == true)
+        {
+            playerRunOff();
+        }
     }
+
+    public void playerRunOn()
+    {
+        if(moveSpeed != runSpeed)
+        {
+            StartCoroutine(changePlayerSpeed(runSpeed));
+
+        }
+    }
+
+    public void playerRunOff()
+    {
+        if(moveSpeed != walkSpeed)
+        {
+           StartCoroutine(changePlayerSpeed(walkSpeed));
+        }
+    }
+
+    IEnumerator changePlayerSpeed(float newSpeed)
+    {
+        yield return new WaitUntil(()=> onGround == true);
+        moveSpeed = newSpeed;
+        Debug.Log("new speed is " + moveSpeed);
+    }
+
 
     void playerMove(Vector2 moveVector)
     {
@@ -50,7 +112,14 @@ public class PlayerController : MonoBehaviour
         rb.velocity = newMoveVector;
         if(onGround == true)
         {
-            changeAnim("Player Walk");
+            if(moveSpeed == walkSpeed)
+            {
+                changeAnim("Player Walk");
+            }
+            if(moveSpeed  == runSpeed)
+            {
+                changeAnim("Player Run");
+            }
         }
         
     }
@@ -79,7 +148,7 @@ public class PlayerController : MonoBehaviour
         if(currentAnim != animation)
         {
             currentAnim = animation;
-            playerAnimator.Play(animation);
+            playerAnimator.Play(currentAnim);
         }
     }
 
@@ -113,4 +182,27 @@ public class PlayerController : MonoBehaviour
         string currentSceneName = gameObject.scene.name;
         SceneManager.LoadScene(currentSceneName);
     }
+
+    public void playerHealthPointUpdate(int addingValue)
+    {
+        if(canTakeDamege)
+        {
+            canTakeDamege = false;
+            healthPoint += addingValue;
+            PlayerPrefs.SetInt("PlayerHP", healthPoint);
+            PlayerPrefs.Save();
+            StartCoroutine(givePlayerShield());
+        }
+        
+    }
+
+    IEnumerator givePlayerShield()
+    {
+        playerSpriteRenderer.color = colorShield;
+        yield return new WaitForSeconds(3);
+        canTakeDamege = true;
+        playerSpriteRenderer.color = colorNormal;
+    }
+
+  
 }
