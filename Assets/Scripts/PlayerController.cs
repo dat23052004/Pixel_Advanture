@@ -5,6 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
+    public PlayerHPBar playerHPBar;
+
     public Rigidbody2D rb;
     Vector2 vectorToRight = new Vector2(1, 0);
     Vector2 vectorToLeft = new Vector2(-1, 0);
@@ -30,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         healthPoint = PlayerPrefs.GetInt("PlayerHP", 100);
+        playerHPBar.updatePlayerHPBar(healthPoint);
     }
 
     void Update()
@@ -189,8 +192,10 @@ public class PlayerController : MonoBehaviour
         {
             canTakeDamege = false;
             healthPoint += addingValue;
+            playerHPBar.updatePlayerHPBar(healthPoint); // update hp to HPBar
             PlayerPrefs.SetInt("PlayerHP", healthPoint);
             PlayerPrefs.Save();
+
             StartCoroutine(givePlayerShield());
         }
         
