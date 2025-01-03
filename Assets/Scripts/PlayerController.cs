@@ -5,6 +5,11 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
+    public GameObject bullet;
+    public Transform right;
+    public Transform left;
+
+    public bool isNonLoopAnaimation = false;
     public PlayerHPBar playerHPBar;
 
     public Rigidbody2D rb;
@@ -29,6 +34,13 @@ public class PlayerController : MonoBehaviour
     public bool canTakeDamege = true;
     public Color colorShield;
     public Color colorNormal;
+
+    GamepadInput gamepadInput;
+
+    private void Awake()
+    {
+        gamepadInput = FindObjectOfType<GamepadInput>();
+    }
     private void Start()
     {
         healthPoint = PlayerPrefs.GetInt("PlayerHP", 100);
@@ -39,6 +51,36 @@ public class PlayerController : MonoBehaviour
     {
         keybodrdController();
         //touchController();
+        //gamepadController();
+    }
+
+    void gamepadController()
+    {
+        if (gamepadInput.LeftAnalogVector2.x <0)
+        {
+            playerMoveLeft();
+        }
+        else if (gamepadInput.LeftAnalogVector2.x >0)
+        {
+            playerMoveRight();
+        }
+        else
+        {
+            playerStopMovement();
+        }
+
+        if (gamepadInput.onButtonDown["Jump"] == true)
+        {
+            playerJump();
+        }
+        if (gamepadInput.onButtonHold["Run"])
+        {
+            playerRunOn();
+        }
+        if (gamepadInput.onButtonUp["Run"] == true)
+        {
+            playerRunOff();
+        }
     }
     void touchController()
     {
@@ -57,6 +99,10 @@ public class PlayerController : MonoBehaviour
     }
     void keybodrdController()
     {
+        if(Input.GetKeyDown("r"))
+        {
+            PlayerAttack();
+        }
         if (Input.GetKey("a"))
         {
            playerMoveLeft();
@@ -105,7 +151,7 @@ public class PlayerController : MonoBehaviour
     {
         yield return new WaitUntil(()=> onGround == true);
         moveSpeed = newSpeed;
-        Debug.Log("new speed is " + moveSpeed);
+        
     }
 
 
@@ -117,11 +163,11 @@ public class PlayerController : MonoBehaviour
         {
             if(moveSpeed == walkSpeed)
             {
-                changeAnim("Player Walk");
+                PlayingAnimation("Player Walk");
             }
             if(moveSpeed  == runSpeed)
             {
-                changeAnim("Player Run");
+                PlayingAnimation("Player Run");
             }
         }
         
@@ -136,23 +182,79 @@ public class PlayerController : MonoBehaviour
     {
         if(onGround == true)
         {
-            changeAnim("Player Idle");
+            PlayingAnimation("Player Idle");
         }
         
     }
     IEnumerator animotionJump()
     {
         yield return new WaitForSeconds(0.1f);
-        changeAnim("Player Jump");
+        PlayingAnimation("Player Jump");
     }
 
-    void changeAnim(string animation)
+    void PlayingAnimation(string animation)
     {
-        if(currentAnim != animation)
+        if(currentAnim != animation && isNonLoopAnaimation == false)
         {
             currentAnim = animation;
             playerAnimator.Play(currentAnim);
         }
+    }
+
+    void PlayingNonLoopAnimation(string animation)
+    {
+        if (currentAnim != animation)
+        {
+            currentAnim = animation;
+            playerAnimator.Play(currentAnim);
+        }
+    }
+
+    IEnumerator PrepareNonLoopAnaimation( string animationName)
+    {
+        isNonLoopAnaimation = true;
+        PlayingNonLoopAnimation(animationName);
+        yield return new WaitForEndOfFrame();
+        var currentAnimationInfo = playerAnimator.GetCurrentAnimatorStateInfo(0);
+        if(currentAnimationInfo.IsName(animationName) == true)
+        {
+            var animationDutarion = currentAnimationInfo.length;
+            yield return new WaitForSeconds(animationDutarion);
+            isNonLoopAnaimation = false;
+        }
+        else
+        {
+            yield return null;
+            isNonLoopAnaimation = false;
+        }   
+    }
+
+    void PlayerAttack()
+    {
+        StartCoroutine(PrepareNonLoopAnaimation("Player Attack"));
+        CreateBullet();
+    }
+
+    void CreateBullet()
+    {
+        Vector3 bulletPosition = new Vector3();
+        Vector2 bulletDirection = new Vector2();
+        float bulletSpeed = 3f;
+        if(playerSpriteRenderer.flipX == true)
+        {
+            bulletPosition = right.position;
+            bulletDirection = new Vector2(1,0);
+        }
+        else
+        {
+            bulletPosition = left.position;
+            bulletDirection = new Vector2(-1, 0);
+
+        }
+
+        var newBullet = Instantiate(bullet, bulletPosition,Quaternion.identity,null);
+        var newBulletRigitbody = newBullet.GetComponent<Rigidbody2D>();
+        newBulletRigitbody.velocity = bulletDirection * bulletSpeed;
     }
 
     public void playerMoveRight()
