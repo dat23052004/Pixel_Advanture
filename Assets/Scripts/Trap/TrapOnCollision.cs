@@ -10,7 +10,7 @@ public class TrapOnCollision : MonoBehaviour
         {
             Debug.Log("collision");
             PlayerController playerController = collision.gameObject.GetComponent<PlayerController>();
-            playerController.playerHealthPointUpdate(-1);
+            playerController.PlayerHealthPointUpdate(-1);
             
         }
     }

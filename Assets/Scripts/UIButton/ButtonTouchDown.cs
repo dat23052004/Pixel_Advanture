@@ -8,11 +8,11 @@ public class ButtonTouchDown : MonoBehaviour, IPointerClickHandler
     {
        if(gameObject.name == "Button Jump")
         {
-            controller.playerJump();
+            controller.PlayerJump();
         }
        if(gameObject.name == "Button Restart")
         {
-            controller.gameRestart();
+            controller.GameRestart();
         }
     }
 }

@@ -5,7 +5,11 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
+
+    public ParticleSystem smokeRunning;
+    public bool isMoving = false;
     public GameObject bullet;
+    public GameObject bouncingBullet;
     public Transform right;
     public Transform left;
 
@@ -49,113 +53,135 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        keybodrdController();
+        KeyboardController();
         //touchController();
         //gamepadController();
     }
 
-    void gamepadController()
+    void GamepadController()
     {
         if (gamepadInput.LeftAnalogVector2.x <0)
         {
-            playerMoveLeft();
+            PlayerMoveLeft();
         }
         else if (gamepadInput.LeftAnalogVector2.x >0)
         {
-            playerMoveRight();
+            PlayerMoveRight();
         }
         else
         {
-            playerStopMovement();
+            PlayerStopMovement();
         }
 
         if (gamepadInput.onButtonDown["Jump"] == true)
         {
-            playerJump();
+            PlayerJump();
         }
         if (gamepadInput.onButtonHold["Run"])
         {
-            playerRunOn();
+            PlayerRunOn();
         }
         if (gamepadInput.onButtonUp["Run"] == true)
         {
-            playerRunOff();
+            PlayerRunOff();
         }
     }
-    void touchController()
+    void TouchController()
     {
         if (isPressedButtonRight == true)
         {
-            playerMoveRight();
+            PlayerMoveRight();
         }
         else if (isPressedButtonLeft == true)
         {
-            playerMoveLeft();
+            PlayerMoveLeft();
         }
         else
         {
-            playerStopMovement();
+            PlayerStopMovement();
         }
     }
-    void keybodrdController()
+    void KeyboardController()
     {
-        if(Input.GetKeyDown("r"))
+        if (Input.GetKeyDown("r") == true)
         {
             PlayerAttack();
         }
-        if (Input.GetKey("a"))
+
+        if (Input.GetKey("d"))
         {
-           playerMoveLeft();
+            PlayerMoveRight();
+            isMoving = true;
         }
-        else if (Input.GetKey("d"))
+        else if (Input.GetKey("a"))
         {
-            playerMoveRight();
+            PlayerMoveLeft();
+            isMoving = true;
         }
         else
         {
-            playerStopMovement();
+            PlayerStopMovement();
+            isMoving = false;
         }
 
-        if (Input.GetKeyDown("space") == true )
+        if (Input.GetKeyDown("space") == true)
         {
-            playerJump();
+            PlayerJump();
+            Debug.Log("space");
+
+            smokeRunning.Stop();
         }
+
+
         if (Input.GetKey("left shift") == true)
         {
-            playerRunOn();
+            PlayerRunOn();
+            if (isMoving == true && moveSpeed == runSpeed)
+            {
+                if (smokeRunning.isPlaying == false)
+                {
+                    Debug.Log("Run");
+                    smokeRunning.Play();
+                }
+            }
+            else
+            {
+                Debug.Log("not moving or not runspeed: " + isMoving + " speed: " + moveSpeed );
+                smokeRunning.Stop();
+            }
+
         }
         if (Input.GetKeyUp("left shift") == true)
         {
-            playerRunOff();
+            Debug.Log("not shift");
+            PlayerRunOff();
+            smokeRunning.Stop();
         }
     }
-
-    public void playerRunOn()
+    public void PlayerRunOn()
     {
-        if(moveSpeed != runSpeed)
+        if (moveSpeed != runSpeed && onGround == true)
         {
-            StartCoroutine(changePlayerSpeed(runSpeed));
-
+            StartCoroutine(ChangePlayerSpeed(runSpeed));
         }
     }
-
-    public void playerRunOff()
+    public void PlayerRunOff()
     {
-        if(moveSpeed != walkSpeed)
+        if (moveSpeed != walkSpeed)
         {
-           StartCoroutine(changePlayerSpeed(walkSpeed));
+            StartCoroutine(ChangePlayerSpeed(walkSpeed));
         }
     }
 
-    IEnumerator changePlayerSpeed(float newSpeed)
+    IEnumerator ChangePlayerSpeed(float newSpeed)
     {
         yield return new WaitUntil(()=> onGround == true);
         moveSpeed = newSpeed;
-        
+
     }
 
 
-    void playerMove(Vector2 moveVector)
+    void PlayerMove(Vector2 moveVector)
     {
         Vector2 newMoveVector = new Vector2(moveVector.x*moveSpeed,rb.velocity.y);
         rb.velocity = newMoveVector;
@@ -170,23 +196,23 @@ public class PlayerController : MonoBehaviour
                 PlayingAnimation("Player Run");
             }
         }
-        
+
     }
 
-    void playerRotation(bool boolValue)
+    void PlayerRotation(bool boolValue)
     {
         playerSpriteRenderer.flipX = boolValue;
     }
 
-    void animotionStop()
+    void AnimotionStop()
     {
         if(onGround == true)
         {
             PlayingAnimation("Player Idle");
         }
-        
+
     }
-    IEnumerator animotionJump()
+    IEnumerator AnimotionJump()
     {
         yield return new WaitForSeconds(0.1f);
         PlayingAnimation("Player Jump");
@@ -232,7 +258,8 @@ public class PlayerController : MonoBehaviour
     void PlayerAttack()
     {
         StartCoroutine(PrepareNonLoopAnaimation("Player Attack"));
-        CreateBullet();
+        //CreateBullet();
+        CreateBouncingBullet();
     }
 
     void CreateBullet()
@@ -257,38 +284,61 @@ public class PlayerController : MonoBehaviour
         newBulletRigitbody.velocity = bulletDirection * bulletSpeed;
     }
 
-    public void playerMoveRight()
+    void CreateBouncingBullet()
     {
-        playerMove(vectorToRight);
-        playerRotation(true);
-    }
-    public void playerMoveLeft()
-    {
-        playerMove(vectorToLeft);
-        playerRotation(false);
+        Vector3 bulletPosition = new Vector3();
+        Vector2 bulletDirection = new Vector2();
+        float bulletSpeed = 4f;
+        if (playerSpriteRenderer.flipX == true)
+        {
+            bulletPosition = right.position;
+            bulletDirection = new Vector2(1, 1);
+        }
+        else
+        {
+            bulletPosition = left.position;
+            bulletDirection = new Vector2(-1, 1);
+
+        }
+
+        var newBullet = Instantiate(bouncingBullet, bulletPosition, Quaternion.identity, null);
+        var newBulletRigitbody = newBullet.GetComponent<Rigidbody2D>();
+        newBulletRigitbody.velocity = bulletDirection * bulletSpeed;
+        newBulletRigitbody.AddTorque(-3f);
     }
 
-    public void playerStopMovement()
+    public void PlayerMoveRight()
     {
-        animotionStop();
+        PlayerMove(vectorToRight);
+        PlayerRotation(true);
+    }
+    public void PlayerMoveLeft()
+    {
+        PlayerMove(vectorToLeft);
+        PlayerRotation(false);
     }
 
-    public void playerJump()
+    public void PlayerStopMovement()
+    {
+        AnimotionStop();
+    }
+
+    public void PlayerJump()
     {
         if (onGround == true)
         {
             rb.AddForce(new Vector2(0, 1) * jumpStrength, ForceMode2D.Impulse);
-            StartCoroutine(animotionJump());
+            StartCoroutine(AnimotionJump());
         }
     }
 
-    public void gameRestart()
+    public void GameRestart()
     {
         string currentSceneName = gameObject.scene.name;
         SceneManager.LoadScene(currentSceneName);
     }
 
-    public void playerHealthPointUpdate(int addingValue)
+    public void PlayerHealthPointUpdate(int addingValue)
     {
         if(canTakeDamege)
         {
@@ -298,12 +348,12 @@ public class PlayerController : MonoBehaviour
             PlayerPrefs.SetInt("PlayerHP", healthPoint);
             PlayerPrefs.Save();
 
-            StartCoroutine(givePlayerShield());
+            StartCoroutine(GivePlayerShield());
         }
-        
+
     }
 
-    IEnumerator givePlayerShield()
+    IEnumerator GivePlayerShield()
     {
         playerSpriteRenderer.color = colorShield;
         yield return new WaitForSeconds(3);
@@ -311,5 +361,6 @@ public class PlayerController : MonoBehaviour
         playerSpriteRenderer.color = colorNormal;
     }
 
-  
+
 }
+

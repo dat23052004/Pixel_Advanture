@@ -45,7 +45,7 @@ public class ButtonTouchHold : MonoBehaviour, IPointerEnterHandler, IPointerExit
             }
             if (name == "Button Run")
             {
-                PlayerController.playerRunOn();
+                PlayerController.PlayerRunOn();
             }
         }
     }
@@ -64,7 +64,7 @@ public class ButtonTouchHold : MonoBehaviour, IPointerEnterHandler, IPointerExit
         }
         if (name == "Button Run")
         {
-            PlayerController.playerRunOff();
+            PlayerController.PlayerRunOff();
         }
         if (name == "Touch Area Left")
         {
