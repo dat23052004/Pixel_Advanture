@@ -41,6 +41,11 @@ public class PlayerController : MonoBehaviour
 
     GamepadInput gamepadInput;
 
+    public TrailRenderer dashTrailRenderer;
+    public float dashPower = 5f;
+    Vector2 dashDirection = new Vector2();
+    bool isDashing = false;
+    bool canDash = true;
     private void Awake()
     {
         gamepadInput = FindObjectOfType<GamepadInput>();
@@ -103,6 +108,14 @@ public class PlayerController : MonoBehaviour
     }
     void KeyboardController()
     {
+        if(Input.GetKeyDown("f") == true)
+        {
+            if(canDash == true)
+            {
+                StartCoroutine(PlayerDash());
+            }
+
+        }
         if (Input.GetKeyDown("r") == true)
         {
             PlayerAttack();
@@ -110,25 +123,30 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKey("d"))
         {
-            PlayerMoveRight();
-            isMoving = true;
+            if(isDashing == false)
+            {
+                PlayerMoveRight();
+                //isMoving = true;
+            }
+           
         }
         else if (Input.GetKey("a"))
         {
-            PlayerMoveLeft();
-            isMoving = true;
+            if(isDashing == false)
+            {
+                PlayerMoveLeft();
+            }
+            //isMoving = true;
         }
         else
         {
             PlayerStopMovement();
-            isMoving = false;
+            //isMoving = false;
         }
 
         if (Input.GetKeyDown("space") == true)
         {
             PlayerJump();
-            Debug.Log("space");
-
             smokeRunning.Stop();
         }
 
@@ -136,28 +154,53 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey("left shift") == true)
         {
             PlayerRunOn();
-            if (isMoving == true && moveSpeed == runSpeed)
+            if ( moveSpeed == runSpeed)
             {
                 if (smokeRunning.isPlaying == false)
                 {
-                    Debug.Log("Run");
+
                     smokeRunning.Play();
                 }
             }
             else
             {
-                Debug.Log("not moving or not runspeed: " + isMoving + " speed: " + moveSpeed );
+               
                 smokeRunning.Stop();
             }
 
         }
         if (Input.GetKeyUp("left shift") == true)
         {
-            Debug.Log("not shift");
+     
             PlayerRunOff();
             smokeRunning.Stop();
         }
     }
+
+    IEnumerator PlayerDash()
+    {
+        dashTrailRenderer.emitting = true;
+        canDash = false;
+        isDashing = true;
+        if(playerSpriteRenderer.flipX == true)
+        {
+            dashDirection = new Vector2(1, 0);
+        }
+        else
+        {
+            dashDirection = new Vector2 (-1, 0);
+        }
+        rb.velocity = dashDirection*dashPower;
+        StartCoroutine(PrepareNonLoopAnaimation("Player Dash"));
+        yield return new WaitForSeconds(0.1f);
+        rb.velocity = dashDirection * moveSpeed;
+        isDashing = false;
+        dashTrailRenderer.emitting = false;
+        //end dash
+        yield return new WaitForSeconds(1f);
+        canDash = true;
+    }
+
     public void PlayerRunOn()
     {
         if (moveSpeed != runSpeed && onGround == true)
@@ -183,7 +226,7 @@ public class PlayerController : MonoBehaviour
 
     void PlayerMove(Vector2 moveVector)
     {
-        Vector2 newMoveVector = new Vector2(moveVector.x*moveSpeed,rb.velocity.y);
+        Vector2 newMoveVector = new Vector2((moveVector.x*moveSpeed)+ movingPlatformVelocityX, rb.velocity.y);
         rb.velocity = newMoveVector;
         if(onGround == true)
         {
@@ -361,6 +404,22 @@ public class PlayerController : MonoBehaviour
         playerSpriteRenderer.color = colorNormal;
     }
 
+    float movingPlatformVelocityX = 0;
 
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if ((collision.gameObject.tag == "MovingPlatform"))
+        {
+            var movingPlatform = collision.gameObject.GetComponent<Rigidbody2D>();
+            movingPlatformVelocityX = movingPlatform.velocity.x;
+        }
+    }
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if ((collision.gameObject.tag == "MovingPlatform"))
+        {
+            movingPlatformVelocityX = 0;
+        }
+    }
 }
 
