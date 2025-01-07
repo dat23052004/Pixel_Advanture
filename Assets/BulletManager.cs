@@ -6,6 +6,7 @@ public class BulletManager : MonoBehaviour
 {
 
     public GameObject hitEffect;
+    public float damage;
     private void Start()
     {
         StartCoroutine(DestroyTime());
@@ -21,6 +22,10 @@ public class BulletManager : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if(collision.gameObject.tag == "Enemy")
+        {
+            collision.gameObject.GetComponent<EnemyHealthBarManager>().UpdateHealth(-1 * damage);
+        }
          Destroy(this.gameObject);
         CreateHitEffect();
 

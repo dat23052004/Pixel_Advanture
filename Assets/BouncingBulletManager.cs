@@ -6,15 +6,23 @@ public class BouncingBulletManager : MonoBehaviour
     public GameObject hitEffect;
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.collider.tag == "Enemy")
-        {
-            Destroy(this.gameObject);
-        }
+        
         touchCount++;   
         if(touchCount >= 3)
         {
-            Instantiate(hitEffect, transform.position, Quaternion.identity,null );
-            Destroy(this.gameObject);
+            DestroyAndEffect();
         }
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag== "Enemy")
+        {
+            DestroyAndEffect();
+        }
+    }
+    void DestroyAndEffect()
+    {
+        Instantiate(hitEffect, transform.position, Quaternion.identity, null);
+        Destroy(this.gameObject);
     }
 }

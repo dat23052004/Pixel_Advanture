@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - MovingPlatform
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -14,7 +15,7 @@ TagManager:
   - UI
   - BackroundLayer
   - Bullet Layer
-  - 11
+  - EnemyLayer
   - 
   - 
   - 
