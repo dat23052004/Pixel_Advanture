@@ -10,8 +10,12 @@ public class EnemyHealthBarManager : MonoBehaviour
     public float enemyMaxHealth;
     public float enemyCurrentHealth;
     HealthBarManager healthBarManager;
+    GameObject player;
+
+    public int scoreOfEnemy = 1;
     private void Awake()
     {
+        player = GameObject.FindGameObjectWithTag("Player");
         damageTextPrefab = Resources.Load<GameObject>("Prefab/Damage Text");
         CreateHealthBar();
     }
@@ -29,6 +33,7 @@ public class EnemyHealthBarManager : MonoBehaviour
         enemyCurrentHealth = enemyCurrentHealth + number;
         if(enemyCurrentHealth <= 0)
         {
+            player.GetComponent<PickItemsManager>().UpdateScore(scoreOfEnemy);
             Destroy(this.gameObject);
         }
         healthBarManager.SetHelth(enemyCurrentHealth,enemyMaxHealth);
