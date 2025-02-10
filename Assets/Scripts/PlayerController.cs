@@ -59,7 +59,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         KeyboardController();
-        //touchController();
+        //TouchController();
         //gamepadController();
     }
 
